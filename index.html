@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feliz cumpleaños, papá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --noche: #120B24;
+    --escenario: #3A0F2E;
+    --codigo: #39FF88;
+    --fuego1: #FF3B2F;
+    --fuego2: #FF9F1C;
+    --oro: #FFD166;
+    --papel: #FFF6E3;
+    --tinta: #2E2420;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    min-height: 100svh; font-family: 'Caveat', cursive; color: var(--papel);
+    background: radial-gradient(120% 80% at 50% 100%, var(--escenario) 0%, var(--noche) 65%);
+    background-attachment: fixed; overflow-x: hidden;
+  }
+  body.cerrado { overflow: hidden; background: #000; }
+  canvas.fijo { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #cielo { z-index: 0; }
+  #lluvia { z-index: 2; transition: opacity 1.4s; }
+  #lluvia.fuera { opacity: 0; }
+  main { position: relative; z-index: 1; display: none; }
+  main.visible { display: block; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 3px solid var(--codigo); outline-offset: 4px; border-radius: 8px; }
+
+  /* ---------- Escena 1: el mensaje entrante ---------- */
+  .intro {
+    position: fixed; inset: 0; z-index: 3; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 30px; padding: 24px; text-align: center;
+    transition: opacity .8s;
+  }
+  .intro.oculta { opacity: 0; pointer-events: none; }
+  .terminal {
+    font-family: 'Share Tech Mono', monospace; color: var(--codigo); font-size: clamp(18px, 4.6vw, 26px);
+    text-align: left; min-height: 4.6em; line-height: 1.5;
+    text-shadow: 0 0 10px rgba(57, 255, 136, .7);
+    background: rgba(0, 0, 0, .7); padding: 18px 22px; border-radius: 6px; width: min(520px, 100%);
+    box-shadow: 0 0 0 1px rgba(57, 255, 136, .35);
+  }
+  .terminal .cursor { display: inline-block; width: .55em; height: 1em; background: var(--codigo); vertical-align: -2px; animation: cursor .9s steps(1) infinite; }
+  @keyframes cursor { 50% { opacity: 0; } }
+  .pastillas { display: flex; gap: 22px; flex-wrap: wrap; justify-content: center; opacity: 0; transform: translateY(16px); transition: .8s; pointer-events: none; }
+  .pastillas.on { opacity: 1; transform: none; pointer-events: auto; }
+  .pastilla {
+    width: 150px; border: 0; background: rgba(0,0,0,.65); color: var(--papel); cursor: pointer;
+    padding: 18px 10px 14px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; gap: 12px;
+    font-family: 'Share Tech Mono', monospace; font-size: 15px; line-height: 1.3;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.15);
+  }
+  .pastilla i {
+    display: block; width: 74px; height: 30px; border-radius: 15px; transform: rotate(-25deg);
+    box-shadow: inset -6px -6px 12px rgba(0,0,0,.35), inset 6px 6px 10px rgba(255,255,255,.45);
+  }
+  .pastilla.roja i { background: linear-gradient(90deg, #ff4d4d 50%, #c4161c 50%); box-shadow: 0 0 26px rgba(255, 60, 60, .8), inset -6px -6px 12px rgba(0,0,0,.35), inset 6px 6px 10px rgba(255,255,255,.45); animation: late 1.4s ease-in-out infinite; }
+  .pastilla.azul i { background: linear-gradient(90deg, #5aa9ff 50%, #1c5fc4 50%); }
+  @keyframes late { 50% { box-shadow: 0 0 46px rgba(255, 60, 60, 1), inset -6px -6px 12px rgba(0,0,0,.35), inset 6px 6px 10px rgba(255,255,255,.45); } }
+  .pastilla.no { animation: no .5s; opacity: .45; }
+  @keyframes no { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+  .destello { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0;
+    background: radial-gradient(circle at 50% 55%, #fff 0%, var(--fuego2) 30%, transparent 75%); }
+  .destello.on { animation: destello 1.3s ease-out; }
+  @keyframes destello { 15% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ---------- Escena 2: concierto ---------- */
+  .hero {
+    position: relative; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 70px 16px 48px; text-align: center; overflow: hidden;
+  }
+  .foco {
+    position: absolute; bottom: -10%; width: 70vmax; height: 120vh; pointer-events: none; mix-blend-mode: screen;
+    background: conic-gradient(from 165deg at 50% 100%, transparent 0deg, rgba(255, 159, 28, .22) 10deg, rgba(255, 209, 102, .05) 22deg, transparent 30deg);
+    transform-origin: 50% 100%; opacity: 0; transition: opacity 2s;
+  }
+  main.visible .foco { opacity: 1; }
+  .foco.a { left: -30vmax; animation: barre 7s ease-in-out infinite alternate; }
+  .foco.b { right: -30vmax; animation: barre 6s ease-in-out infinite alternate-reverse;
+    background: conic-gradient(from 165deg at 50% 100%, transparent 0deg, rgba(57, 255, 136, .16) 10deg, rgba(57, 255, 136, .04) 22deg, transparent 30deg); }
+  @keyframes barre { from { transform: rotate(-18deg); } to { transform: rotate(22deg); } }
+
+  .titulo { position: relative; font-family: 'Anton', Impact, sans-serif; font-weight: 400; line-height: .9; text-transform: uppercase; }
+  .titulo span { display: block; opacity: 0; transform: scale(1.6); filter: blur(10px); }
+  main.visible .titulo span { animation: golpe .7s cubic-bezier(.2,.9,.3,1) forwards; }
+  main.visible .titulo span:nth-child(2) { animation-delay: .35s; }
+  main.visible .titulo span:nth-child(3) { animation-delay: .7s; }
+  @keyframes golpe { to { opacity: 1; transform: none; filter: none; } }
+  .titulo .l1 { font-size: clamp(28px, 7vw, 54px); letter-spacing: .12em; color: var(--codigo); text-shadow: 0 0 18px rgba(57,255,136,.6); }
+  .titulo .l2 { font-size: clamp(40px, 13vw, 140px); color: var(--papel); text-shadow: 4px 4px 0 var(--fuego1), 0 0 40px rgba(255, 59, 47, .5); }
+  .titulo .l3 {
+    font-size: clamp(90px, 30vw, 260px); letter-spacing: .01em;
+    background: linear-gradient(0deg, var(--fuego1) 0%, var(--fuego2) 45%, var(--oro) 70%, #fff6c9 100%);
+    background-size: 100% 220%; -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 28px rgba(255, 120, 30, .55));
+  }
+  main.visible .titulo .l3 { animation: golpe .7s cubic-bezier(.2,.9,.3,1) .7s forwards, llamas 1.6s ease-in-out 1.4s infinite alternate; }
+  @keyframes llamas { to { background-position: 0 100%; } }
+
+  /* Tarta */
+  .tarta { position: relative; width: 240px; height: 230px; margin: 26px auto 6px; }
+  .tarta::before {
+    content: ""; position: absolute; left: 50%; top: -40px; width: 360px; height: 260px; transform: translateX(-50%);
+    background: radial-gradient(ellipse at 50% 30%, rgba(255, 190, 90, .35), transparent 65%); transition: opacity 1.2s; pointer-events: none;
+  }
+  .tarta.apagada::before { opacity: 0; }
+  .plato { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 260px; height: 26px; border-radius: 50%;
+    background: linear-gradient(#d9d9e0, #8d8d99); box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+  .piso { position: absolute; left: 50%; transform: translateX(-50%); border-radius: 10px 10px 14px 14px; overflow: hidden; }
+  .piso.p1 { bottom: 14px; width: 220px; height: 82px; background: linear-gradient(90deg, #1d1d24, #34343f 40%, #1d1d24); }
+  .piso.p2 { bottom: 92px; width: 160px; height: 66px; background: linear-gradient(90deg, #8e1b1b, #c9302c 40%, #8e1b1b); }
+  .piso::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 30px;
+    background: radial-gradient(circle at 10px 20px, var(--papel) 9px, transparent 10px) 0 0 / 28px 30px repeat-x, linear-gradient(var(--papel) 14px, transparent 14px);
+  }
+  .piso.p1::after {
+    content: "★ ★ ★"; position: absolute; bottom: 18px; left: 0; right: 0; text-align: center;
+    font-family: 'Anton', sans-serif; font-size: 18px; letter-spacing: .4em; color: var(--oro);
+  }
+  .piso.p2::after { content: ""; position: absolute; bottom: 12px; left: 0; right: 0; height: 6px;
+    background: repeating-linear-gradient(90deg, var(--oro) 0 10px, transparent 10px 16px); }
+  .velas { position: absolute; bottom: 156px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 2; }
+  .vela { position: relative; width: 12px; height: 46px; border: 0; border-radius: 4px; cursor: pointer; padding: 0;
+    background: repeating-linear-gradient(-45deg, var(--papel) 0 6px, var(--fuego1) 6px 12px); }
+  .vela:nth-child(even) { height: 40px; background: repeating-linear-gradient(-45deg, var(--papel) 0 6px, #2a2a33 6px 12px); }
+  .llama {
+    position: absolute; bottom: calc(100% + 2px); left: 50%; width: 14px; height: 24px; margin-left: -7px;
+    border-radius: 50% 50% 45% 45% / 65% 65% 35% 35%;
+    background: radial-gradient(circle at 50% 75%, #fff 0 18%, #fff3b0 30%, var(--oro) 55%, #ff7b29 90%);
+    box-shadow: 0 0 18px 6px rgba(255, 190, 80, .55), 0 0 50px 14px rgba(255, 150, 60, .25);
+    transform-origin: 50% 90%; animation: parpadeo .18s infinite alternate; transition: opacity .35s, transform .35s;
+  }
+  @keyframes parpadeo { to { transform: scale(1.06, .9) rotate(4deg); } }
+  .vela.apagada .llama { opacity: 0; transform: translateY(-14px) scale(.1); animation: none; }
+  .humo { position: absolute; bottom: calc(100% + 8px); left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: rgba(255,255,255,.5); opacity: 0; pointer-events: none; }
+  .vela.apagada .humo { animation: humo 1.6s ease-out forwards; }
+  @keyframes humo { 0% { opacity: .7; } 100% { opacity: 0; transform: translate(10px, -60px) scale(4); } }
+
+  .soplar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 16px; margin-top: 18px; }
+  .boton {
+    display: inline-block; border: 0; border-radius: 6px; padding: 12px 24px; cursor: pointer; text-decoration: none;
+    font-family: 'Anton', Impact, sans-serif; font-size: 20px; letter-spacing: .05em; text-transform: uppercase;
+    color: #1a0b05; background: linear-gradient(180deg, var(--oro), var(--fuego2));
+    box-shadow: 0 4px 0 #a2470c, 0 10px 30px rgba(255, 120, 30, .35); transition: transform .12s, box-shadow .12s;
+  }
+  .boton:hover { transform: translateY(-2px); }
+  .boton:active { transform: translateY(3px); box-shadow: 0 1px 0 #a2470c; }
+  .nota { font-size: 26px; color: var(--oro); }
+  .estado { min-height: 34px; font-size: 30px; color: var(--codigo); margin-top: 8px; }
+  .medidor { width: 180px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; display: none; margin-top: 10px; }
+  .medidor.on { display: block; }
+  .medidor i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--codigo), var(--oro)); }
+  .seguir { margin-top: 14px; opacity: 0; pointer-events: none; transition: opacity .8s; }
+  .seguir.on { opacity: 1; pointer-events: auto; }
+
+  /* ---------- Escena 3: la carta ---------- */
+  .seccion { padding: 72px 16px; display: flex; flex-direction: column; align-items: center; }
+  .carta {
+    position: relative; width: min(560px, 100%); padding: 44px 34px 38px; border-radius: 3px;
+    background: repeating-linear-gradient(transparent 0 37px, rgba(46, 36, 32, .1) 37px 38px) 0 52px, var(--papel);
+    color: var(--tinta); transform: rotate(-1.2deg);
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+  }
+  .carta::before { content: ""; position: absolute; top: -14px; left: 50%; width: 110px; height: 30px; transform: translateX(-50%) rotate(2deg); background: rgba(255, 209, 102, .8); }
+  .saludo { font-size: 40px; font-weight: 700; color: #b3261e; margin-bottom: 6px; }
+  .mensaje { font-size: clamp(23px, 5.4vw, 27px); line-height: 38px; white-space: pre-line; min-height: 300px; }
+  .mensaje .cursor { display: inline-block; width: 2px; height: 1em; background: var(--tinta); vertical-align: -3px; animation: cursor .8s steps(1) infinite; }
+  .firma { font-size: 38px; font-weight: 700; color: #b3261e; text-align: right; margin-top: 12px; opacity: 0; transition: opacity 1s; }
+  .firma.on { opacity: 1; }
+  .dibujo { display: none; max-width: 100%; margin: 4px auto 16px; border-radius: 3px; transform: rotate(2deg); box-shadow: 0 6px 18px rgba(0,0,0,.2); }
+
+  /* ---------- Escena 4: el juego ---------- */
+  .juego { width: min(440px, 100%); text-align: center; }
+  .juego h2 { font-family: 'Anton', Impact, sans-serif; font-weight: 400; font-size: clamp(40px, 11vw, 60px); line-height: 1; text-transform: uppercase;
+    color: var(--papel); text-shadow: 3px 3px 0 var(--fuego1); }
+  .reglas { margin: 10px 0 16px; font-size: 24px; line-height: 1.3; }
+  .marcador { display: flex; justify-content: space-between; align-items: baseline; padding: 0 6px 6px; font-family: 'Share Tech Mono', monospace; font-size: 16px; color: var(--codigo); }
+  .marcador b { font-size: 24px; }
+  .barra { height: 8px; border-radius: 4px; background: rgba(255,255,255,.12); overflow: hidden; margin: 0 6px 12px; }
+  .barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--codigo), var(--oro)); transition: width .25s; }
+  #lienzo { width: 100%; aspect-ratio: 360 / 440; display: block; border-radius: 16px; touch-action: none;
+    box-shadow: 0 0 0 2px rgba(57, 255, 136, .35), 0 20px 60px rgba(0,0,0,.55); }
+  .juego .boton { margin-top: 18px; }
+  .premio { display: none; margin-top: 26px; padding: 24px 22px; border-radius: 14px;
+    background: linear-gradient(160deg, rgba(255, 159, 28, .18), rgba(255, 59, 47, .14)); box-shadow: inset 0 0 0 2px rgba(255, 209, 102, .5); }
+  .premio.on { display: block; animation: golpe .6s both; }
+  .premio h3 { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; color: var(--oro); margin-bottom: 6px; }
+  .premio p { font-size: 30px; line-height: 1.2; white-space: pre-line; }
+
+  .final { padding: 40px 16px 90px; text-align: center; }
+  .final p { font-size: 32px; color: var(--oro); margin-bottom: 16px; }
+
+  .musica { position: fixed; top: max(14px, env(safe-area-inset-top)); right: 14px; z-index: 6; width: 46px; height: 46px; border-radius: 50%;
+    border: 0; cursor: pointer; font-size: 22px; color: #1a0b05; background: var(--oro); box-shadow: 0 6px 20px rgba(0,0,0,.4); display: none; }
+  .musica.on { display: block; }
+  .musica.mute { background: rgba(255,255,255,.25); color: var(--papel); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body class="cerrado">
+
+<canvas class="fijo" id="cielo"></canvas>
+<canvas class="fijo" id="lluvia"></canvas>
+<div class="destello" id="destello"></div>
+<button class="musica" id="musica" aria-label="Silenciar música">♪</button>
+
+<!-- Escena 1 -->
+<section class="intro" id="intro">
+  <p class="terminal" id="terminal" aria-live="polite"></p>
+  <div class="pastillas" id="pastillas">
+    <button class="pastilla azul" id="azul"><i></i>Seguir con un martes normal</button>
+    <button class="pastilla roja" id="roja"><i></i>Abrir tu regalo</button>
+  </div>
+</section>
+
+<main id="main">
+  <!-- Escena 2 -->
+  <section class="hero">
+    <div class="foco a"></div><div class="foco b"></div>
+    <h1 class="titulo">
+      <span class="l1">Feliz</span>
+      <span class="l2">Cumpleaños</span>
+      <span class="l3 js-nombre"></span>
+    </h1>
+
+    <div class="tarta" id="tarta">
+      <div class="velas" id="velas"></div>
+      <div class="piso p2"></div>
+      <div class="piso p1"></div>
+      <div class="plato"></div>
+    </div>
+
+    <div class="soplar" id="soplar">
+      <button class="boton" id="btnMic">Soplar con el micro</button>
+      <span class="nota">o toca las velas</span>
+    </div>
+    <div class="medidor" id="medidor"><i></i></div>
+    <p class="estado" id="estado" aria-live="polite"></p>
+    <a class="boton seguir" id="seguir" href="#carta">Leer mi carta</a>
+  </section>
+
+  <!-- Escena 3 -->
+  <section class="seccion" id="carta">
+    <article class="carta">
+      <p class="saludo">Querido <span class="js-nombre"></span>:</p>
+      <img class="dibujo" id="dibujo" alt="Un dibujo hecho para papá">
+      <p class="mensaje" id="mensaje"></p>
+      <p class="firma" id="firma"></p>
+    </article>
+  </section>
+
+  <!-- Escena 4 -->
+  <section class="seccion">
+    <div class="juego">
+      <h2>Superpapá al rescate</h2>
+      <p class="reglas">Atrapa las guitarras y los regalos, esquiva los meteoritos.<br>
+        🎸 +1 &nbsp; 🎁 +3 &nbsp; ☄️ −2</p>
+      <div class="marcador"><span>PUNTOS <b id="puntos">0</b>/<span id="meta"></span></span><span id="comentario"></span></div>
+      <div class="barra"><i id="barra"></i></div>
+      <canvas id="lienzo" width="360" height="440"></canvas>
+      <button class="boton" id="jugar">Jugar</button>
+      <div class="premio" id="premio">
+        <h3>Misión cumplida</h3>
+        <p id="premioTexto"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <p>Y para cerrar el concierto…</p>
+    <button class="boton" id="otraVez">Lanzar fuegos artificiales</button>
+  </section>
+</main>
+
+<script>
+/* =========================================================
+   ✏️  PERSONALIZA AQUÍ
+   ========================================================= */
+const CONFIG = {
+  nombre: "papá",
+  mensaje: `Eres la persona de la que más he aprendido en esta vida.
+
+Para mí eres mi superhéroe: más fuerte que cualquiera que vuele con capa, y sin necesitarla.
+
+Gracias por enseñarme tanto, por tu paciencia, por tus consejos y por estar siempre ahí, incluso cuando no te lo pongo fácil.
+
+Todo lo bueno que hay en mí tiene un poquito de ti.
+
+Que este año venga con mucho rock, muchas partidas y todo lo que te mereces.
+
+¡Te amo muchísimo!`,
+  firma: "Nani",
+  velas: 5,
+  textoFuegos: "Te amo, papá",
+  premio: `Has ganado el mejor premio:
+una hija que te ama muchísimo
+y que aprendió de ti todo lo importante.`,
+  metaJuego: 20,
+  dibujo: ""                          // p. ej. "dibujo.png" si subes un dibujo tuyo al repo
+};
+/* ========================================================= */
+
+const $ = s => document.querySelector(s);
+const rand = (a, b) => a + Math.random() * (b - a);
+const pocoMovimiento = matchMedia("(prefers-reduced-motion: reduce)").matches;
+document.querySelectorAll(".js-nombre").forEach(e => e.textContent = CONFIG.nombre);
+$("#firma").textContent = CONFIG.firma;
+$("#meta").textContent = CONFIG.metaJuego;
+$("#premioTexto").textContent = CONFIG.premio;
+if (CONFIG.dibujo) { const d = $("#dibujo"); d.src = CONFIG.dibujo; d.style.display = "block"; }
+
+let W, H;
+
+/* ---------- Escena 1: lluvia de código ---------- */
+const lc = $("#lluvia"), lx = lc.getContext("2d");
+const SIMBOLOS = "アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789PAPÁ★";
+let gotas = [], lluviaViva = true, velocidad = 1, ultimaGota = 0;
+const TAM = 18;
+function prepararLluvia() {
+  lc.width = W; lc.height = H;
+  lx.fillStyle = "#000"; lx.fillRect(0, 0, W, H);
+  gotas = Array.from({ length: Math.ceil(W / TAM) }, () => rand(-H / TAM, 0));
+}
+function llover(t) {
+  if (!lluviaViva) return;
+  if (t - ultimaGota > 55 / velocidad) {
+    ultimaGota = t;
+    lx.fillStyle = "rgba(0, 0, 0, .09)"; lx.fillRect(0, 0, W, H);
+    lx.font = `${TAM}px 'Share Tech Mono', monospace`;
+    gotas.forEach((y, i) => {
+      const ch = SIMBOLOS[Math.floor(Math.random() * SIMBOLOS.length)];
+      lx.fillStyle = Math.random() < .08 ? "#d8ffe6" : "#39FF88";
+      lx.fillText(ch, i * TAM, y * TAM);
+      gotas[i] = (y * TAM > H && Math.random() > .975) ? 0 : y + 1;
+    });
+  }
+  requestAnimationFrame(llover);
+}
+
+function escribirTerminal(lineas, fin) {
+  const el = $("#terminal");
+  const nodo = document.createTextNode(""), cursor = document.createElement("span");
+  cursor.className = "cursor"; el.append(nodo, cursor);
+  const total = lineas.join("\n");
+  let i = 0;
+  (function paso() {
+    nodo.data = total.slice(0, ++i).replace(/\n/g, "\n");
+    el.style.whiteSpace = "pre-line";
+    if (i < total.length) setTimeout(paso, total[i - 1] === "\n" ? 700 : 55);
+    else fin && fin();
+  })();
+}
+
+/* ---------- Cielo: estrellas + fuegos artificiales ---------- */
+const cv = $("#cielo"), ctx = cv.getContext("2d");
+const COLORES = ["#FFD166", "#FF3B2F", "#FF9F1C", "#39FF88", "#FFF6E3", "#5aa9ff"];
+let estrellas = [], cohetes = [], chispas = [], letrero = [], fiesta = false;
+
+function redimensionar() {
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  estrellas = Array.from({ length: Math.round(W * H / 3500) }, () => ({ x: Math.random() * W, y: Math.random() * H * .8, r: rand(.3, 1.4), v: rand(.6, 2.2), f: rand(0, 6.3) }));
+  if (lluviaViva) prepararLluvia();
+}
+addEventListener("resize", redimensionar); redimensionar();
+
+function cohete(x = rand(W * .15, W * .85), alto = rand(H * .12, H * .45), color) {
+  const g = .11;
+  cohetes.push({ x, y: H + 10, vx: rand(-.4, .4), vy: -Math.sqrt(2 * g * (H + 10 - alto)), g, c: color || COLORES[Math.floor(Math.random() * COLORES.length)] });
+}
+function explotar(x, y, c, n = 80) {
+  const c2 = COLORES[Math.floor(Math.random() * COLORES.length)], anillo = Math.random() < .3;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rand(-.05, .05), s = anillo ? 3.6 + rand(-.25, .25) : rand(1.2, 4.6);
+    chispas.push({ x, y, px: x, py: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, g: .045, roce: .982, vida: 1, baja: rand(.009, .017), c: i % 3 ? c : c2, t: rand(1.2, 2.4) });
+  }
+  for (let i = 0; i < 18; i++) chispas.push({ x, y, px: x, py: y, vx: rand(-1, 1), vy: rand(-1, 1), g: .02, roce: .96, vida: 1, baja: .03, c: "#fff", t: 2.5 });
+}
+function salva(n = 6, cada = 260) { for (let i = 0; i < n; i++) setTimeout(() => cohete(), i * cada); }
+
+function escribirConFuegos(texto, duracion = 5200) {
+  const off = document.createElement("canvas"); off.width = W; off.height = H;
+  const o = off.getContext("2d");
+  const fs = Math.min(W / (texto.length * .5), 130), cy = H * .5;
+  const hs = fs * .75, hx = W / 2, hy = cy - fs * 1.05;
+  o.fillStyle = "#f00"; o.beginPath();
+  o.moveTo(hx, hy + hs * .35);
+  o.bezierCurveTo(hx - hs * .9, hy - hs * .35, hx - hs * .45, hy - hs * .95, hx, hy - hs * .45);
+  o.bezierCurveTo(hx + hs * .45, hy - hs * .95, hx + hs * .9, hy - hs * .35, hx, hy + hs * .35);
+  o.fill();
+  o.fillStyle = "#0f0"; o.font = `${fs}px Anton, Impact, sans-serif`;
+  o.textAlign = "center"; o.textBaseline = "middle";
+  o.fillText(texto.toUpperCase(), W / 2, cy + fs * .3);
+  const d = o.getImageData(0, 0, W, H).data, paso = Math.max(3, Math.round(Math.sqrt(W * H) / 190));
+  letrero = [];
+  for (let y = 0; y < H; y += paso) for (let x = 0; x < W; x += paso) {
+    const i = (y * W + x) * 4;
+    if (d[i + 3] > 128) {
+      const corazon = d[i] > 128;
+      letrero.push({ x: W / 2 + rand(-40, 40), y: H * .95, tx: x, ty: y, f: rand(0, 6.3),
+        c: corazon ? "#FF3B2F" : (Math.random() < .75 ? "#FFD166" : "#FF9F1C"), r: corazon ? 1.7 : 1.5,
+        retraso: rand(0, 25), suelto: false, vx: 0, vy: 0, vida: 1 });
+    }
+  }
+  explotar(W / 2, H * .5, "#FFD166", 120);
+  setTimeout(() => letrero.forEach(p => { p.suelto = true; p.vx = rand(-1.2, 1.2); p.vy = rand(-2.5, .5); }), duracion);
+}
+
+function dibujarCielo(t) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = "#fff";
+  for (const e of estrellas) { ctx.globalAlpha = .3 + .6 * Math.abs(Math.sin(t / 1000 * e.v + e.f)); ctx.fillRect(e.x, e.y, e.r, e.r); }
+  ctx.globalCompositeOperation = "lighter";
+  if (fiesta && !pocoMovimiento && Math.random() < .018) cohete();
+  cohetes = cohetes.filter(k => {
+    k.x += k.vx; k.y += k.vy; k.vy += k.g;
+    ctx.globalAlpha = 1; ctx.fillStyle = k.c; ctx.beginPath(); ctx.arc(k.x, k.y, 2, 0, 7); ctx.fill();
+    ctx.globalAlpha = .4; ctx.fillRect(k.x - .5, k.y, 1, 18);
+    if (k.vy >= -.4) { explotar(k.x, k.y, k.c); return false; }
+    return true;
+  });
+  chispas = chispas.filter(p => {
+    p.px = p.x; p.py = p.y; p.vx *= p.roce; p.vy = p.vy * p.roce + p.g; p.x += p.vx; p.y += p.vy; p.vida -= p.baja;
+    ctx.globalAlpha = Math.max(0, p.vida); ctx.strokeStyle = p.c; ctx.lineWidth = p.t;
+    ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(p.x, p.y); ctx.stroke();
+    return p.vida > 0;
+  });
+  letrero = letrero.filter(p => {
+    if (!p.suelto) {
+      if (p.retraso > 0) { p.retraso--; return true; }
+      p.x += (p.tx - p.x) * .075; p.y += (p.ty - p.y) * .075;
+      ctx.globalAlpha = .55 + .45 * Math.sin(t / 160 + p.f);
+    } else { p.vy += .05; p.x += p.vx; p.y += p.vy; p.vida -= .012; ctx.globalAlpha = Math.max(0, p.vida); }
+    ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill();
+    return p.vida > 0;
+  });
+  ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+  requestAnimationFrame(dibujarCielo);
+}
+requestAnimationFrame(dibujarCielo);
+
+/* ---------- Música: Cumpleaños feliz en versión rock ---------- */
+let audio, master, silencio = false;
+const NOTAS = { G4: 392, A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99 };
+const CANCION = [["G4",.75],["G4",.25],["A4",1],["G4",1],["C5",1],["B4",2],
+                 ["G4",.75],["G4",.25],["A4",1],["G4",1],["D5",1],["C5",2],
+                 ["G4",.75],["G4",.25],["G5",1],["E5",1],["C5",1],["B4",1],["A4",2],
+                 ["F5",.75],["F5",.25],["E5",1],["C5",1],["D5",1],["C5",3]];
+const ACORDES = [130.81, 98, 98, 130.81, 130.81, 87.31, 130.81, 98, 130.81]; // C G G C C F C G C (compases de 3)
+function curvaDistorsion(k = 60) {
+  const n = 1024, c = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const x = i * 2 / n - 1; c[i] = (1 + k) * x / (1 + k * Math.abs(x)); }
+  return c;
+}
+let ruido;
+function tocarCancion() {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (!master) { master = audio.createGain(); master.gain.value = silencio ? 0 : .2; master.connect(audio.destination); }
+    if (!ruido) { ruido = audio.createBuffer(1, audio.sampleRate * .3, audio.sampleRate); const d = ruido.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    // guitarra distorsionada
+    const dist = audio.createWaveShaper(); dist.curve = curvaDistorsion(80);
+    const filtro = audio.createBiquadFilter(); filtro.type = "lowpass"; filtro.frequency.value = 2600;
+    const gGuit = audio.createGain(); gGuit.gain.value = .55;
+    dist.connect(filtro); filtro.connect(gGuit); gGuit.connect(master);
+    const pulso = .4, inicio = audio.currentTime + .15;
+    let t = inicio;
+    for (const [n, d] of CANCION) {
+      for (const det of [-6, 6]) {
+        const o = audio.createOscillator(), g = audio.createGain();
+        o.type = "sawtooth"; o.frequency.value = NOTAS[n]; o.detune.value = det;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.35, t + .02);
+        g.gain.setValueAtTime(.3, t + d * pulso * .85); g.gain.linearRampToValueAtTime(0, t + d * pulso);
+        o.connect(g); g.connect(dist); o.start(t); o.stop(t + d * pulso + .05);
+      }
+      t += d * pulso;
+    }
+    // acordes de quinta + batería, empiezan tras la anacrusa
+    const t1 = inicio + pulso;
+    ACORDES.forEach((f, c) => {
+      const tc = t1 + c * 3 * pulso;
+      for (let b = 0; b < 3; b++) {
+        const tb = tc + b * pulso;
+        if (tb > t + .2) return;
+        // power chord
+        for (const mult of [1, 1.5, 2]) {
+          const o = audio.createOscillator(), g = audio.createGain();
+          o.type = "square"; o.frequency.value = f * mult;
+          g.gain.setValueAtTime(.18, tb); g.gain.exponentialRampToValueAtTime(.01, tb + pulso * .9);
+          o.connect(g); g.connect(dist); o.start(tb); o.stop(tb + pulso);
+        }
+        // bombo en el 1, caja en el 2 y el 3
+        if (b === 0) {
+          const o = audio.createOscillator(), g = audio.createGain();
+          o.frequency.setValueAtTime(150, tb); o.frequency.exponentialRampToValueAtTime(40, tb + .15);
+          g.gain.setValueAtTime(1, tb); g.gain.exponentialRampToValueAtTime(.001, tb + .25);
+          o.connect(g); g.connect(master); o.start(tb); o.stop(tb + .3);
+        } else {
+          const s = audio.createBufferSource(), hp = audio.createBiquadFilter(), g = audio.createGain();
+          s.buffer = ruido; hp.type = "highpass"; hp.frequency.value = 1500;
+          g.gain.setValueAtTime(.45, tb); g.gain.exponentialRampToValueAtTime(.001, tb + .16);
+          s.connect(hp); hp.connect(g); g.connect(master); s.start(tb); s.stop(tb + .2);
+        }
+      }
+    });
+  } catch (e) { /* sin audio, no pasa nada */ }
+}
+$("#musica").addEventListener("click", () => {
+  silencio = !silencio;
+  if (master) master.gain.value = silencio ? 0 : .2;
+  $("#musica").classList.toggle("mute", silencio);
+  $("#musica").setAttribute("aria-label", silencio ? "Activar música" : "Silenciar música");
+  if (!silencio) tocarCancion();
+});
+
+/* ---------- Arranque: terminal y pastillas ---------- */
+prepararLluvia();
+requestAnimationFrame(llover);
+document.fonts.ready.then(() => {
+  setTimeout(() => escribirTerminal(["> Conexión establecida.", `> ${CONFIG.nombre[0].toUpperCase() + CONFIG.nombre.slice(1)}, tienes un mensaje.`, "> Elige."],
+    () => $("#pastillas").classList.add("on")), 900);
+});
+$("#azul").addEventListener("click", function () {
+  this.classList.remove("no"); void this.offsetWidth; this.classList.add("no");
+  this.innerHTML = "<i></i>Hoy no, papá. Toca la roja.";
+});
+$("#roja").addEventListener("click", function () {
+  $("#azul").disabled = this.disabled = true;
+  velocidad = 6;
+  tocarCancion();
+  setTimeout(() => {
+    $("#destello").classList.add("on");
+    $("#lluvia").classList.add("fuera");
+    $("#intro").classList.add("oculta");
+    document.body.classList.remove("cerrado");
+    $("#main").classList.add("visible");
+    $("#musica").classList.add("on");
+    explotar(W / 2, H / 2, "#FFD166", 160);
+    fiesta = true;
+    salva(pocoMovimiento ? 2 : 7);
+  }, 700);
+  setTimeout(() => { lluviaViva = false; $("#intro").remove(); $("#lluvia").remove(); }, 2300);
+});
+
+/* ---------- Velas ---------- */
+const velasBox = $("#velas");
+for (let i = 0; i < CONFIG.velas; i++) {
+  const v = document.createElement("button");
+  v.className = "vela"; v.setAttribute("aria-label", `Apagar la vela ${i + 1}`);
+  v.innerHTML = '<span class="llama"></span><span class="humo"></span>';
+  v.addEventListener("click", () => apagar(v));
+  velasBox.appendChild(v);
+}
+let celebrado = false;
+function apagar(v) {
+  if (!v || v.classList.contains("apagada")) return;
+  v.classList.add("apagada");
+  const quedan = velasBox.querySelectorAll(".vela:not(.apagada)").length;
+  $("#estado").textContent = quedan ? `¡Quedan ${quedan}!` : "";
+  if (quedan === 0 && !celebrado) celebrar();
+}
+function celebrar() {
+  celebrado = true; pararMicro();
+  $("#tarta").classList.add("apagada");
+  $("#soplar").style.visibility = "hidden";
+  $("#estado").textContent = "¡Pide un deseo!";
+  salva(pocoMovimiento ? 2 : 10, 180);
+  setTimeout(() => escribirConFuegos(CONFIG.textoFuegos), 1400);
+  setTimeout(() => $("#seguir").classList.add("on"), 4000);
+}
+let micro = false, flujoMicro;
+async function empezarMicro() {
+  const btn = $("#btnMic");
+  try { flujoMicro = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { $("#estado").textContent = "Sin micrófono: toca las velas para apagarlas"; btn.style.display = "none"; return; }
+  audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+  const an = audio.createAnalyser(); an.fftSize = 512;
+  audio.createMediaStreamSource(flujoMicro).connect(an);
+  const buf = new Uint8Array(an.fftSize);
+  btn.style.display = "none"; $("#medidor").classList.add("on");
+  $("#estado").textContent = "¡Sopla fuerte!";
+  let ultimo = 0; micro = true;
+  (function escuchar(t) {
+    if (!micro) return;
+    an.getByteTimeDomainData(buf);
+    let s = 0; for (const b of buf) { const v = (b - 128) / 128; s += v * v; }
+    const nivel = Math.sqrt(s / buf.length);
+    $("#medidor i").style.width = Math.min(100, nivel * 400) + "%";
+    if (nivel > .16 && t - ultimo > 160) { ultimo = t; apagar(velasBox.querySelector(".vela:not(.apagada)")); }
+    requestAnimationFrame(escuchar);
+  })(0);
+}
+function pararMicro() {
+  micro = false; $("#medidor").classList.remove("on");
+  if (flujoMicro) flujoMicro.getTracks().forEach(t => t.stop());
+}
+$("#btnMic").addEventListener("click", empezarMicro);
+
+/* ---------- Carta escrita a mano ---------- */
+let cartaEscrita = false;
+new IntersectionObserver((entradas, obs) => {
+  if (!entradas[0].isIntersecting || cartaEscrita) return;
+  cartaEscrita = true; obs.disconnect();
+  const el = $("#mensaje"), txt = CONFIG.mensaje;
+  if (pocoMovimiento) { el.textContent = txt; $("#firma").classList.add("on"); return; }
+  let i = 0;
+  const nodo = document.createTextNode(""), cursor = document.createElement("span");
+  cursor.className = "cursor"; el.append(nodo, cursor);
+  (function escribir() {
+    nodo.data = txt.slice(0, ++i);
+    if (i < txt.length) setTimeout(escribir, txt[i - 1] === "\n" ? 260 : /[.,!:]/.test(txt[i - 1]) ? 180 : 30);
+    else { cursor.remove(); $("#firma").classList.add("on"); }
+  })();
+}, { threshold: .35 }).observe($("#carta .carta"));
+
+/* ---------- Minijuego: Superpapá al rescate ---------- */
+(function () {
+  const lz = $("#lienzo"), g = lz.getContext("2d");
+  const LW = lz.width, LH = lz.height;
+  const cols = Array.from({ length: 20 }, () => [rand(-LH, 0), rand(1, 3)]);
+  const heroe = { x: LW / 2, y: LH - 40, w: 70 };
+  const TIPOS = [{ e: "🎸", v: 1, p: .6 }, { e: "🎁", v: 3, p: .15 }, { e: "☄️", v: -2, p: .25 }];
+  let cosas = [], brillos = [], puntos = 0, jugando = false, ultimo = 0, siguiente = 0, flechas = 0, ganado = false;
+  const elegir = () => { let r = Math.random(), a = 0; for (const t of TIPOS) { a += t.p; if (r < a) return t; } return TIPOS[0]; };
+  function marcar() { $("#puntos").textContent = puntos; $("#barra").style.width = Math.min(100, puntos / CONFIG.metaJuego * 100) + "%"; }
+  function pintar(t = 0) {
+    const grad = g.createLinearGradient(0, 0, 0, LH); grad.addColorStop(0, "#050b08"); grad.addColorStop(1, "#1a0c22");
+    g.fillStyle = grad; g.fillRect(0, 0, LW, LH);
+    // lluvia de código de fondo
+    g.font = "14px 'Share Tech Mono', monospace"; g.textAlign = "center"; g.textBaseline = "middle";
+    cols.forEach((c, i) => {
+      for (let k = 0; k < 8; k++) {
+        g.globalAlpha = (1 - k / 8) * .22; g.fillStyle = "#39FF88";
+        g.fillText(SIMBOLOS[(i * 7 + k * 3 + Math.floor(t / 200)) % SIMBOLOS.length], i * 18 + 9, c[0] - k * 16);
+      }
+      if (jugando) { c[0] += c[1]; if (c[0] - 130 > LH) c[0] = rand(-60, 0); }
+    });
+    g.globalAlpha = 1;
+    g.font = "32px serif";
+    for (const c of cosas) { g.save(); g.translate(c.x, c.y); g.rotate(Math.sin(t / 300 + c.f) * .25); g.fillText(c.t.e, 0, 0); g.restore(); }
+    for (const b of brillos) { g.globalAlpha = b.vida; g.fillStyle = b.c; g.beginPath(); g.arc(b.x, b.y, 2.2, 0, 7); g.fill(); }
+    g.globalAlpha = 1;
+    // escudo de energía bajo el héroe
+    g.strokeStyle = "rgba(57,255,136,.8)"; g.lineWidth = 3; g.shadowColor = "#39FF88"; g.shadowBlur = 16;
+    g.beginPath(); g.ellipse(heroe.x, heroe.y + 4, heroe.w / 2, 12, 0, Math.PI * .05, Math.PI * .95); g.stroke();
+    g.shadowColor = "rgba(255,209,102,.9)"; g.shadowBlur = 22;
+    g.font = "50px serif"; g.fillText("🦸‍♂️", heroe.x, heroe.y - 8);
+    g.shadowBlur = 0;
+    if (!jugando) {
+      g.fillStyle = "rgba(0,0,0,.6)"; g.fillRect(0, LH / 2 - 52, LW, 84);
+      g.fillStyle = "#FFF6E3"; g.font = "30px Anton, Impact, sans-serif";
+      g.fillText(ganado ? "¡MISIÓN CUMPLIDA!" : "PULSA JUGAR", LW / 2, LH / 2 - 10);
+    }
+  }
+  function bucle(t) {
+    if (!jugando) return;
+    const dt = Math.min(40, t - ultimo) / 16.7; ultimo = t;
+    heroe.x = Math.max(heroe.w / 2, Math.min(LW - heroe.w / 2, heroe.x + flechas * 8 * dt));
+    if (t > siguiente) {
+      cosas.push({ t: elegir(), x: rand(24, LW - 24), y: -24, vy: rand(2, 3.2) + puntos * .07, f: rand(0, 6) });
+      siguiente = t + Math.max(330, 680 - puntos * 16);
+    }
+    for (const c of cosas) c.y += c.vy * dt;
+    cosas = cosas.filter(c => {
+      if (c.y > heroe.y - 40 && c.y < heroe.y + 10 && Math.abs(c.x - heroe.x) < heroe.w / 2) {
+        puntos = Math.max(0, puntos + c.t.v); marcar();
+        $("#comentario").textContent = c.t.v > 0 ? (c.t.v > 1 ? "¡REGALAZO!" : "¡ROCK!") : "¡AUCH!";
+        const col = c.t.v > 0 ? "#FFD166" : "#FF3B2F";
+        for (let i = 0; i < 14; i++) brillos.push({ x: c.x, y: c.y, vx: rand(-3, 3), vy: rand(-4, 0), vida: 1, c: col });
+        return false;
+      }
+      return c.y < LH + 30;
+    });
+    brillos = brillos.filter(b => { b.x += b.vx; b.y += b.vy; b.vy += .15; b.vida -= .03; return b.vida > 0; });
+    if (puntos >= CONFIG.metaJuego) {
+      jugando = false; ganado = true; cosas = [];
+      $("#comentario").textContent = ""; $("#jugar").textContent = "Jugar otra vez";
+      $("#premio").classList.add("on");
+      salva(8, 200);
+      setTimeout(() => escribirConFuegos("¡Superpapá!"), 900);
+      pintar(t); return;
+    }
+    pintar(t); requestAnimationFrame(bucle);
+  }
+  $("#jugar").addEventListener("click", () => {
+    puntos = 0; cosas = []; brillos = []; marcar(); $("#comentario").textContent = "";
+    jugando = true; ultimo = performance.now(); siguiente = 0; requestAnimationFrame(bucle);
+  });
+  function mover(e) {
+    const r = lz.getBoundingClientRect();
+    heroe.x = Math.max(heroe.w / 2, Math.min(LW - heroe.w / 2, (e.clientX - r.left) / r.width * LW));
+    if (!jugando) pintar(performance.now());
+  }
+  lz.addEventListener("pointermove", mover); lz.addEventListener("pointerdown", mover);
+  addEventListener("keydown", e => {
+    if (!jugando) return;
+    if (e.key === "ArrowLeft") { flechas = -1; e.preventDefault(); }
+    if (e.key === "ArrowRight") { flechas = 1; e.preventDefault(); }
+  });
+  addEventListener("keyup", e => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") flechas = 0; });
+  marcar(); pintar(0); document.fonts.ready.then(() => pintar(0));
+})();
+
+/* ---------- Final ---------- */
+$("#otraVez").addEventListener("click", () => {
+  window.scrollTo({ top: 0 });
+  salva(pocoMovimiento ? 2 : 12, 150);
+  setTimeout(() => escribirConFuegos(CONFIG.textoFuegos), 1200);
+  if (!silencio) tocarCancion();
+});
+</script>
+</body>
+</html>
